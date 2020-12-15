@@ -17,12 +17,10 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
  */
 @Configuration
 public class RouterFunctionConfig {
-
     @Bean
     public RouterFunction<ServerResponse> route(HandlerFunction handlerFunction) {
         return RouterFunctions.route(GET("/functional/flux").and(accept(MediaType.APPLICATION_JSON)), handlerFunction::flux)
                 .andRoute(GET("/functional/mono").and(accept(MediaType.APPLICATION_JSON)), handlerFunction::mono);
     }
-
 }
 
