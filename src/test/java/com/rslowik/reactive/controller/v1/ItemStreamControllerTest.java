@@ -10,7 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.core.CollectionOptions;
-import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.ReactiveMongoOperations;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -31,17 +31,19 @@ class ItemStreamControllerTest {
     private WebTestClient webTestClient;
 
     @Autowired
-    private MongoOperations mongoOperations;
+    private ReactiveMongoOperations reactiveMongoOperations;
 
     @Autowired
     private ItemCappedReactiveRepository itemCappedReactiveRepository;
 
     @BeforeEach
     public void setup() {
-        mongoOperations.dropCollection(ItemCapped.class);
-        mongoOperations.createCollection(
+        reactiveMongoOperations.dropCollection(ItemCapped.class);
+        reactiveMongoOperations.createCollection(
                 ItemCapped.class, CollectionOptions.empty().maxDocuments(20).size(50000).capped()
-        );
+        ).then().block();
+
+        log.info("Created Mongo Collection ........");
         Flux<ItemCapped> fluxCapped = Flux.interval(Duration.ofMillis(100))
                 .map(i -> new ItemCapped(null, "Test Item " + i, 111.11 + i))
                 .take(5);
@@ -49,6 +51,7 @@ class ItemStreamControllerTest {
                 .insert(fluxCapped)
                 .doOnNext(itemCapped -> log.info("Test insert {}", itemCapped))
                 .blockLast();
+        log.info("Insert to Mongo done ........");
     }
 
     @Test
@@ -64,5 +67,6 @@ class ItemStreamControllerTest {
                 .expectNextCount(5)
                 .thenCancel()
                 .verify();
+        log.info("End of method");
     }
 }

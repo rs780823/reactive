@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.core.CollectionOptions;
-import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.ReactiveMongoOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -28,19 +28,19 @@ import java.util.List;
 public class ItemDataInitializer implements CommandLineRunner {
 
     private final ItemReactiveRepository itemReactiveRepository;
-    private final MongoOperations mongoOperations;
+    private final ReactiveMongoOperations reactiveMongoOperations;
     private final ItemCappedReactiveRepository itemCappedReactiveRepository;
 
     @Override
     public void run(String... args) throws Exception {
         initializeDb();
         createCappedCollection();
+        dataSetupForCappedCollection();
     }
 
     private void createCappedCollection() {
-        mongoOperations.dropCollection(ItemCapped.class);
-        mongoOperations.createCollection(ItemCapped.class, CollectionOptions.empty().maxDocuments(20).size(50000).capped());
-        dataSetupForCappedCollection();
+        reactiveMongoOperations.dropCollection(ItemCapped.class);
+        reactiveMongoOperations.createCollection(ItemCapped.class, CollectionOptions.empty().maxDocuments(20).size(50000).capped());
     }
 
     private void initializeDb() {
